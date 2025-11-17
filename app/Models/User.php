@@ -2,65 +2,48 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
+// Jika Anda pakai Spatie Roles, tambahkan:
+// use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    // Hapus 'HasRoles' jika tidak pakai Spatie
+    use HasApiTokens, HasFactory, Notifiable; 
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $primaryKey = 'id_pengguna';
+
     protected $fillable = [
-        'username',
+        'nama',
         'email',
         'password',
-        'role'
+        'nomor_telepon',
+        'alamat',
+        'foto_profil',
+        'role',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    public function sessions()
+    // Relasi: Satu User (Pembeli) punya banyak Pesanan [cite: 3573]
+    public function pesanans()
     {
-        return $this->hasMany(Session::class);
+        return $this->hasMany(Pesanan::class, 'id_pembeli', 'id_pengguna');
     }
 
-    public function registrations()
+    // Relasi: Satu User (Pembeli) bisa punya banyak Komplain [cite: 3573]
+    public function komplains()
     {
-        return $this->hasMany(Registration::class);
-    }
-
-    public function feedbacks()
-    {
-        return $this->hasMany(Feedback::class);
-    }
-
-    public function sessionProposals()
-    {
-        return $this->hasMany(SessionProposal::class);
+        return $this->hasMany(Komplain::class, 'id_pembeli', 'id_pengguna');
     }
 }

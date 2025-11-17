@@ -2,53 +2,88 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\SessionController;
-use App\Http\Controllers\FeedbackController;
-use App\Http\Controllers\AuthenticationController;
-use App\Http\Controllers\SessionProposalController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\ProdukController;
+use App\Http\Controllers\KeranjangController;
+use App\Http\Controllers\PesananController;
+use App\Http\Controllers\PembayaranController;
+use App\Http\Controllers\KomplainController;
+use App\Http\Controllers\BeritaController;
+use App\Http\Controllers\Admin\ProdukController as AdminProdukController;
+use App\Http\Controllers\Admin\PesananController as AdminPesananController;
+use App\Http\Controllers\Admin\KomplainController as AdminKomplainController;
+use App\Http\Controllers\Admin\BeritaController as AdminBeritaController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
 */
 
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
+// === Rute Publik (Tidak perlu login) ===
+Route::post('/register', [UserController::class, 'daftarPengguna']);
+Route::post('/login', [UserController::class, 'masuk']);
 
-Route::get('/session', [SessionController::class, 'index']);
-Route::post('/sessions/{sessionId}/register', [SessionController::class, 'register'])->middleware(['auth:sanctum','role:user']);
-Route::get('/user/registrations', [SessionController::class, 'showRegistrations'])->middleware(['auth:sanctum','role:user']);
-Route::get('/sessions/{id}', [SessionController::class, 'showSession'])->middleware(['auth:sanctum','role:user']);
-Route::put('/sessions/{id}', [SessionController::class, 'updateSession'])->middleware(['auth:sanctum','role:user']);
-Route::delete('/sessions/{id}', [SessionController::class, 'deleteSession'])->middleware(['auth:sanctum','role:user']);
+Route::get('/produk', [ProdukController::class, 'ambilSemuaProduk']);
+Route::get('/produk/search', [ProdukController::class, 'cariProduk']); // Contoh route untuk cari/filter
+Route::get('/produk/{id}', [ProdukController::class, 'ambilDetailProduk']);
 
-Route::post('/session-proposals/create', [SessionProposalController::class, 'createProposal'])->middleware(['auth:sanctum','role:user']);
-Route::get('/session-proposals/{id}', [SessionProposalController::class, 'showProposal'])->middleware(['auth:sanctum','role:user']);
-Route::put('/session-proposals/{id}', [SessionProposalController::class, 'updateProposal'])->middleware(['auth:sanctum','role:user']);
-Route::delete('/session-proposals/{id}', [SessionProposalController::class, 'deleteProposal'])->middleware(['auth:sanctum','role:user']);
+Route::get('/berita', [BeritaController::class, 'ambilDaftarBerita']);
+Route::get('/berita/{id}', [BeritaController::class, 'ambilDetailBerita']);
 
-Route::get('/session-proposals', [SessionProposalController::class, 'viewSessionProposals'])->middleware(['auth:sanctum','role:event_coordinator']);
-Route::post('/session-proposals/{proposalId}/accept', [SessionProposalController::class, 'acceptProposal'])->middleware(['auth:sanctum','role:event_coordinator']);
-Route::post('/session-proposals/{proposalId}/reject', [SessionProposalController::class, 'rejectProposal'])->middleware(['auth:sanctum','role:event_coordinator']);
-Route::delete('/session/{id}', [SessionController::class, 'deleteSessionEvent'])->middleware(['auth:sanctum','role:event_coordinator']);
-Route::delete('/sessions/{sessionId}/feedback/{feedbackId}', [SessionController::class, 'deleteFeedback'])->middleware(['auth:sanctum','role:event_coordinator']);
 
-Route::post('/users', [AdminController::class, 'addUser'])->middleware(['auth:sanctum','role:admin']);
-Route::delete('/users/{userId}', [AdminController::class, 'removeUser'])->middleware(['auth:sanctum','role:admin']);
+// === Rute Terotentikasi (Perlu login sebagai 'pembeli' atau 'admin') ===
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [UserController::class, 'logout']);
 
-Route::post('/feedback', [FeedbackController::class, 'store'])->middleware(['auth:sanctum','role:user']);
+    // --- Rute Khusus Pembeli ---
+    // (Asumsi Anda akan menambahkan middleware role 'pembeli')
+    Route::prefix('user')->middleware('role:pembeli')->group(function () {
+        Route::get('/profil', [ProfilController::class, 'ambilProfil']);
+        Route::put('/profil', [ProfilController::class, 'perbaruiProfil']);
+        Route::put('/profil/ubah-sandi', [ProfilController::class, 'ubahKataSandi']);
 
-Route::post('/register', [AuthenticationController::class, 'register']);
-Route::post('/login', [AuthenticationController::class, 'login']);
-Route::get('/me', [AuthenticationController::class, 'me'])->middleware(['auth:sanctum','role:user']);
-Route::get('/search/{id}', [AuthenticationController::class, 'search'])->middleware(['auth:sanctum','role:user']);
-Route::put('/update', [AuthenticationController::class, 'updateProfile'])->middleware(['auth:sanctum','role:user']);
-Route::get('/logout', [AuthenticationController::class, 'logout'])->middleware(['auth:sanctum','role:user,admin,event_coordinator']);
+        // Keranjang (Contoh, bisa disesuaikan)
+        Route::get('/keranjang', [KeranjangController::class, 'ambilKeranjang']);
+        Route::post('/keranjang', [KeranjangController::class, 'tambahItemKeranjang']);
+        Route::put('/keranjang/{id_detail}', [KeranjangController::class, 'perbaruiKuantitas']);
+        Route::delete('/keranjang/{id_detail}', [KeranjangController::class, 'hapusItemKeranjang']);
+
+        // Pesanan & Pembayaran
+        Route::post('/pesanan/checkout', [PesananController::class, 'buatPesanan']); // (buatPesanan)
+        Route::get('/pesanan', [PesananController::class, 'ambilDaftarPesananPembeli']);
+        Route::get('/pesanan/{id_pesanan}', [PesananController::class, 'ambilDetailPesanan']);
+        Route::get('/pesanan/{id_pesanan}/status', [PesananController::class, 'cekStatusPesanan']);
+        
+        Route::get('/pesanan/{id_pesanan}/pembayaran', [PembayaranController::class, 'ambilDetailPembayaran']);
+        Route::post('/pesanan/{id_pesanan}/pembayaran/konfirmasi', [PembayaranController::class, 'perbaruiStatusPembayaran']);
+        Route::post('/pesanan/{id_pesanan}/batalkan', [PembayaranController::class, 'batalkanPesanan']);
+
+        // Komplain
+        Route::post('/pesanan/{id_pesanan}/komplain', [KomplainController::class, 'ajukanKomplain']);
+    });
+
+    // --- Rute Khusus Admin ---
+    Route::prefix('admi')->middleware('role:admin')->name('admin.')->group(function () {
+        // Admin: Manajemen Produk
+        Route::post('/produk', [AdminProdukController::class, 'tambahProduk']);
+        Route::put('/produk/{id}', [AdminProdukController::class, 'ubahProduk']);
+        Route::put('/produk/{id}/arsip', [AdminProdukController::class, 'arsipProduk']);
+        Route::delete('/produk/{id}', [AdminProdukController::class, 'hapusProduk']);
+
+        // Admin: Manajemen Pesanan
+        Route::get('/pesanan', [AdminPesananController::class, 'ambilSemuaPesanan']);
+        Route::put('/pesanan/{id_pesanan}/status', [AdminPesananController::class, 'perbaruiStatusPesanan']);
+
+        // Admin: Manajemen Komplain
+        Route::get('/komplain', [AdminKomplainController::class, 'ambilDaftarKomplain']);
+        Route::get('/komplain/{id_komplain}', [AdminKomplainController::class, 'ambilDetailKomplain']);
+        Route::put('/komplain/{id_komplain}/status', [AdminKomplainController::class, 'perbaruiStatusKomplain']);
+
+        // Admin: Manajemen Berita
+        Route::post('/berita', [AdminBeritaController::class, 'tambahBerita']);
+        Route::put('/berita/{id}', [AdminBeritaController::class, 'ubahBerita']);
+        Route::delete('/berita/{id}', [AdminBeritaController::class, 'hapusBerita']);
+    });
+});
