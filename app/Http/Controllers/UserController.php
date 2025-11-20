@@ -125,4 +125,8 @@ class UserController extends Controller
             'message' => 'Logout berhasil'
         ], 200);
     }
+
+    public function me(Request $request) {
+        return response()->json(Auth::user());
+    }
 }

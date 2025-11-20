@@ -19,12 +19,12 @@ class KeranjangController extends Controller
     public function ambilKeranjang(Request $request)
     {
         $user = Auth::user();
-        
+
         // Cari pesanan yang statusnya 'Keranjang'
         $keranjang = Pesanan::where('id_pembeli', $user->id_pengguna)
-                            ->where('status_pesanan', 'Keranjang')
-                            ->with('detailPesanans.produk') // Ambil item & data produknya
-                            ->first();
+            ->where('status_pesanan', 'Keranjang')
+            ->with('detailPesanans.produk') // Ambil item & data produknya
+            ->first();
 
         if (!$keranjang) {
             return response()->json([
@@ -51,11 +51,14 @@ class KeranjangController extends Controller
         $validator = Validator::make($request->all(), [
             'id_produk' => 'required|integer|exists:produks,id_produk',
             'kuantitas' => 'required|integer|min:1',
+            'mode' => 'in:cart,buy' // mode opsional: cart / buy
         ]);
 
         if($validator->fails()){
             return response()->json(['status' => 'error', 'errors' => $validator->errors()], 400);
         }
+
+        $mode = $request->mode ?? "cart"; // default keranjang
 
         // 1. Cek Produk & Stok
         $produk = Produk::find($request->id_produk);
@@ -63,47 +66,74 @@ class KeranjangController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Stok produk tidak mencukupi'], 400);
         }
 
-        // 2. Cari Keranjang aktif, atau Buat Baru jika belum ada
-        // Ini adalah implementasi dari "ambil atau buat keranjang"
+        // =======================
+        //          BUY NOW
+        // =======================
+        if ($mode === "buy") {
+
+            // Selalu buat pesanan baru
+            $pesanan = Pesanan::create([
+                'id_pembeli' => $user->id_pengguna,
+                'status_pesanan' => 'Checkout',
+                'alamat_pengiriman' => $user->alamat,
+            ]);
+
+            $detail = DetailPesanan::create([
+                'id_pesanan' => $pesanan->id_pesanan,
+                'id_produk' => $request->id_produk,
+                'kuantitas_produk' => $request->kuantitas,
+                'harga_produk_tersimpan' => $produk->harga_produk,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Checkout langsung berhasil',
+                'id_pesanan' => $pesanan->id_pesanan,
+                'data' => $detail
+            ], 201);
+        }
+
+        // =======================
+        //        KERANJANG
+        // =======================
         $keranjang = Pesanan::firstOrCreate(
             [
                 'id_pembeli' => $user->id_pengguna,
                 'status_pesanan' => 'Keranjang'
             ],
             [
-                'alamat_pengiriman' => $user->alamat, // Ambil alamat default user
+                'alamat_pengiriman' => $user->alamat
             ]
         );
 
-        // 3. Cek apakah item sudah ada di keranjang
+        // Cek apakah item sudah ada
         $item = DetailPesanan::where('id_pesanan', $keranjang->id_pesanan)
-                             ->where('id_produk', $request->id_produk)
-                             ->first();
+            ->where('id_produk', $request->id_produk)
+            ->first();
 
         if ($item) {
-            // Jika sudah ada, tambahkan kuantitasnya
-            // Cek stok lagi untuk total kuantitas
-            if ($produk->stok_produk < ($item->kuantitas + $request->kuantitas)) {
-                 return response()->json(['status' => 'error', 'message' => 'Stok produk tidak mencukupi untuk jumlah total'], 400);
+            if ($produk->stok_produk < ($item->kuantitas_produk + $request->kuantitas)) {
+                return response()->json(['status' => 'error', 'message' => 'Stok tidak cukup total kuantitas'], 400);
             }
-            $item->kuantitas += $request->kuantitas;
+            $item->kuantitas_produk += $request->kuantitas;
             $item->save();
         } else {
-            // Jika belum ada, buat item detail pesanan baru
             $item = DetailPesanan::create([
                 'id_pesanan' => $keranjang->id_pesanan,
                 'id_produk' => $request->id_produk,
                 'kuantitas_produk' => $request->kuantitas,
-                'harga_produk_tersimpan' => $produk->harga_produk, // Simpan harga saat ini
+                'harga_produk_tersimpan' => $produk->harga_produk,
             ]);
         }
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Item berhasil ditambahkan ke keranjang',
+            'message' => 'Item ditambahkan ke keranjang',
+            'id_pesanan' => $keranjang->id_pesanan,
             'data' => $item
         ], 201);
     }
+
 
     /**
      * Memperbarui kuantitas item di keranjang.
@@ -112,19 +142,19 @@ class KeranjangController extends Controller
     public function perbaruiKuantitas(Request $request, $id_detail)
     {
         $user = Auth::user();
-        
+
         $validator = Validator::make($request->all(), [
             'kuantitas' => 'required|integer|min:1',
         ]);
 
-        if($validator->fails()){
+        if ($validator->fails()) {
             return response()->json(['status' => 'error', 'errors' => $validator->errors()], 400);
         }
-        
+
         // 1. Cari item detail
         $item = DetailPesanan::find($id_detail);
         if (!$item) {
-             return response()->json(['status' => 'error', 'message' => 'Item tidak ditemukan'], 404);
+            return response()->json(['status' => 'error', 'message' => 'Item tidak ditemukan'], 404);
         }
 
         // 2. Validasi Kepemilikan (PENTING!)
@@ -142,7 +172,7 @@ class KeranjangController extends Controller
         // 4. Update kuantitas
         $item->kuantitas_produk = $request->kuantitas;
         $item->save();
-        
+
         return response()->json([
             'status' => 'success',
             'message' => 'Kuantitas item diperbarui',
@@ -157,10 +187,10 @@ class KeranjangController extends Controller
     public function hapusItem($id_detail)
     {
         $user = Auth::user();
-        
+
         $item = DetailPesanan::find($id_detail);
         if (!$item) {
-             return response()->json(['status' => 'error', 'message' => 'Item tidak ditemukan'], 404);
+            return response()->json(['status' => 'error', 'message' => 'Item tidak ditemukan'], 404);
         }
 
         // Validasi Kepemilikan (PENTING!)
@@ -169,7 +199,7 @@ class KeranjangController extends Controller
         }
 
         $item->delete();
-        
+
         return response()->json([
             'status' => 'success',
             'message' => 'Item berhasil dihapus dari keranjang'

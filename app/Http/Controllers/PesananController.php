@@ -33,7 +33,7 @@ class PesananController extends Controller
 
         // 2. Validasi input checkout
         $validator = Validator::make($request->all(), [
-            'alamat_pengiriman' => 'required|string',
+            // 'alamat_pengiriman' => 'required|string',
             'metode_pembayaran' => 'required|string|in:QRIS,VA,COD', // Contoh
         ]);
 
@@ -66,7 +66,7 @@ class PesananController extends Controller
             // 6. Update status Pesanan (dari 'Keranjang' menjadi 'Menunggu Pembayaran')
             $keranjang->update([
                 'status_pesanan' => 'Menunggu Pembayaran',
-                'alamat_pengiriman' => $request->alamat_pengiriman,
+                'alamat_pengiriman' => $user->alamat,
             ]);
             
             DB::commit(); // Semua sukses, simpan perubahan ke database
@@ -94,12 +94,33 @@ class PesananController extends Controller
     {
         $user = Auth::user();
         
+        $excludeStatus = ['Checkout', 'Keranjang'];
+
         $daftarPesanan = Pesanan::where('id_pembeli', $user->id_pengguna)
-                                ->where('status_pesanan', '!=', 'Keranjang') // Ambil semua KECUALI keranjang
+                                ->whereNotIn('status_pesanan', $excludeStatus) // Ambil semua KECUALI keranjang
                                 ->with('detailPesanans.produk', 'pembayaran')
                                 ->orderBy('created_at', 'desc')
-                                ->paginate(10);
+                                ->get();
         
+        return response()->json($daftarPesanan, 200);
+    }
+
+    public function ambilDetailPesanan($id)
+    {
+        $user = Auth::user();
+        
+        $daftarPesanan = Pesanan::where('id_pembeli', $user->id_pengguna)
+                                ->where('id_pesanan', $id)
+                                ->with('detailPesanans.produk', 'pembayaran')
+                                ->orderBy('created_at', 'desc')
+                                ->first();
+        
+        if (!$daftarPesanan) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pesanan tidak ditemukan.'
+            ], 404); // 404 Not Found
+        }
         return response()->json($daftarPesanan, 200);
     }
 
