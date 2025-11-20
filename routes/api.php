@@ -40,19 +40,21 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- Rute Khusus Pembeli ---
     // (Asumsi Anda akan menambahkan middleware role 'pembeli')
     Route::prefix('user')->middleware('role:pembeli')->group(function () {
+        Route::get('/me', [UserController::class, 'me']);
+
         Route::get('/profil', [ProfilController::class, 'ambilProfil']);
         Route::put('/profil', [ProfilController::class, 'perbaruiProfil']);
         Route::put('/profil/ubah-sandi', [ProfilController::class, 'ubahKataSandi']);
 
         // Keranjang (Contoh, bisa disesuaikan)
         Route::get('/keranjang', [KeranjangController::class, 'ambilKeranjang']);
-        Route::post('/keranjang', [KeranjangController::class, 'tambahItemKeranjang']);
+        Route::post('/keranjang', [KeranjangController::class, 'tambahItem']);
         Route::put('/keranjang/{id_detail}', [KeranjangController::class, 'perbaruiKuantitas']);
-        Route::delete('/keranjang/{id_detail}', [KeranjangController::class, 'hapusItemKeranjang']);
+        Route::delete('/keranjang/{id_detail}', [KeranjangController::class, 'hapusItem']);
 
         // Pesanan & Pembayaran
         Route::post('/pesanan/checkout', [PesananController::class, 'buatPesanan']); // (buatPesanan)
-        Route::get('/pesanan', [PesananController::class, 'ambilDaftarPesananPembeli']);
+        Route::get('/pesanan', [PesananController::class, 'ambilDaftarPesanan']);
         Route::get('/pesanan/{id_pesanan}', [PesananController::class, 'ambilDetailPesanan']);
         Route::get('/pesanan/{id_pesanan}/status', [PesananController::class, 'cekStatusPesanan']);
         

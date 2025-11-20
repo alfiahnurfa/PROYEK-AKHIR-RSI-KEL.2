@@ -16,7 +16,7 @@ class ProdukController extends Controller
     {
         // Menggunakan paginate() lebih baik dari all() agar data tidak meledak
         // Hanya ambil produk yang statusnya 'Aktif'
-        $produks = Produk::where('status_produk', 'Aktif')->paginate(10);
+        $produks = Produk::where('status_produk', 'Aktif')->get();
 
         return response()->json($produks, 200);
     }
