@@ -37,7 +37,7 @@ class PembayaranController extends Controller
      * Mengubah status dari 'Menunggu' -> 'Menunggu Konfirmasi'
      * Sesuai PSD-004 (perbaruiStatusPembayaran)
      */
-    public function konfirmasiPembayaran(Request $request, $id_pesanan)
+    public function perbaruiStatusPembayaran(Request $request, $id_pesanan)
     {
         $user = Auth::user();
         $pembayaran = Pembayaran::where('id_pesanan', $id_pesanan)
@@ -50,14 +50,18 @@ class PembayaranController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Pembayaran tidak ditemukan'], 404);
         }
         
-        if ($pembayaran->status_pembayaran !== 'Menunggu') {
+        if ($pembayaran->status_pembayaran !== 'menunggu_pembayaran') {
              return response()->json(['status' => 'error', 'message' => 'Pembayaran sudah dikonfirmasi atau dibatalkan'], 400);
         }
 
         // Ubah status
         $pembayaran->update([
-            'status_pembayaran' => 'Menunggu Konfirmasi',
+            'status_pembayaran' => 'menunggu_konfirmasi',
             'tanggal_pembayaran' => now()
+        ]);
+
+        $pembayaran->pesanan->update([
+            'status_pesanan' => 'menunggu_konfirmasi'
         ]);
 
         return response()->json([
@@ -84,7 +88,7 @@ class PembayaranController extends Controller
         }
 
         // Hanya boleh batal jika status 'Menunggu Pembayaran'
-        if ($pesanan->status_pesanan !== 'Menunggu Pembayaran') {
+        if ($pesanan->status_pesanan !== 'menunggu') {
              return response()->json(['status' => 'error', 'message' => 'Pesanan yang sudah diproses tidak dapat dibatalkan.'], 400);
         }
 
@@ -98,9 +102,9 @@ class PembayaranController extends Controller
             }
 
             // 2. Update status pesanan & pembayaran
-            $pesanan->update(['status_pesanan' => 'Dibatalkan']);
+            $pesanan->update(['status_pesanan' => 'dibatalkan']);
             if ($pesanan->pembayaran) {
-                $pesanan->pembayaran->update(['status_pembayaran' => 'Dibatalkan']);
+                $pesanan->pembayaran->update(['status_pembayaran' => 'dibatalkan']);
             }
 
             DB::commit();
