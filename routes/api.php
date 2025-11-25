@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\ProdukController;
-use App\Http\Controllers\KeranjangController;
 use App\Http\Controllers\PesananController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\KomplainController;
@@ -45,12 +44,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profil', [ProfilController::class, 'ambilProfil']);
         Route::put('/profil', [ProfilController::class, 'perbaruiProfil']);
         Route::put('/profil/ubah-sandi', [ProfilController::class, 'ubahKataSandi']);
-
-        // Keranjang (Contoh, bisa disesuaikan)
-        Route::get('/keranjang', [KeranjangController::class, 'ambilKeranjang']);
-        Route::post('/keranjang', [KeranjangController::class, 'tambahItem']);
-        Route::put('/keranjang/{id_detail}', [KeranjangController::class, 'perbaruiKuantitas']);
-        Route::delete('/keranjang/{id_detail}', [KeranjangController::class, 'hapusItem']);
 
         // Pesanan & Pembayaran
         Route::post('/pesanan/checkout', [PesananController::class, 'buatPesanan']); // (buatPesanan)
