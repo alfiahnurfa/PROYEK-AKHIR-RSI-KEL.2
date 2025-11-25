@@ -43,7 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [UserController::class, 'me']);
 
         Route::get('/profil', [ProfilController::class, 'ambilProfil']);
-        Route::put('/profil', [ProfilController::class, 'perbaruiProfil']);
+        Route::put('/profil', [ProfilController::class, 'ubahProfil']);
         Route::put('/profil/ubah-sandi', [ProfilController::class, 'ubahKataSandi']);
 
         // Keranjang (Contoh, bisa disesuaikan)
@@ -67,11 +67,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // --- Rute Khusus Admin ---
-    Route::prefix('admi')->middleware('role:admin')->name('admin.')->group(function () {
+    Route::prefix('admin')->middleware('role:admin')->name('admin.')->group(function () {
         // Admin: Manajemen Produk
         Route::post('/produk', [AdminProdukController::class, 'tambahProduk']);
         Route::put('/produk/{id}', [AdminProdukController::class, 'ubahProduk']);
-        Route::put('/produk/{id}/arsip', [AdminProdukController::class, 'arsipProduk']);
         Route::delete('/produk/{id}', [AdminProdukController::class, 'hapusProduk']);
 
         // Admin: Manajemen Pesanan
