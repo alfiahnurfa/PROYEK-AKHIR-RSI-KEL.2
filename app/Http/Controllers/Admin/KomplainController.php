@@ -33,7 +33,7 @@ class KomplainController extends Controller
             $query->where('status_komplain', $request->status);
         }
         
-        $komplains = $query->orderBy('tanggal_pengajuan', 'desc')->paginate(15);
+        $komplains = $query->orderBy('tanggal_pengajuan', 'desc')->get();
         return response()->json($komplains, 200);
     }
 
