@@ -7,7 +7,7 @@ use App\Models\Produk;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
-// use Illuminate\Support\Facades\Storage; // Gunakan ini jika Anda handle upload foto
+use Illuminate\Support\Facades\Storage; // Gunakan ini jika Anda handle upload foto
 
 class ProdukController extends Controller
 {
@@ -42,8 +42,7 @@ class ProdukController extends Controller
             'berat_produk' => 'required|numeric|min:0',
             'harga_produk' => 'required|numeric|min:0',
             'stok_produk' => 'required|integer|min:0',
-            'foto_produk' => 'required|string', // Untuk sementara pakai URL string dulu
-            // 'foto_produk' => 'required|image|mimes:jpg,png|max:2048', // Jika mau upload file
+            'foto_produk' => 'required|image|mimes:jpg,png|max:2048', // Jika mau upload file
         ]);
 
         if($validator->fails()){
@@ -51,10 +50,10 @@ class ProdukController extends Controller
         }
         
         // --- (Logika Upload File jika diperlukan) ---
-        // $path = null;
-        // if ($request->hasFile('foto_produk')) {
-        //     $path = $request->file('foto_produk')->store('public/produks');
-        // }
+        $path = null;
+        if ($request->hasFile('foto_produk')) {
+            $path = $request->file('foto_produk')->store('images/produk', 'public');
+        }
 
         $produk = Produk::create([
             'nama_produk' => $request->nama_produk,
@@ -63,7 +62,7 @@ class ProdukController extends Controller
             'berat_produk' => $request->berat_produk,
             'harga_produk' => $request->harga_produk,
             'stok_produk' => $request->stok_produk,
-            'foto_produk' => $request->foto_produk, // Ganti dengan $path jika upload file
+            'foto_produk' => $path, // Ganti dengan $path jika upload file
             'status_produk' => 'Aktif', // Sesuai pseudo-code
         ]);
 
@@ -84,27 +83,52 @@ class ProdukController extends Controller
             return response()->json(['message' => 'Akses ditolak'], 403);
         }
         
-        // 1. Cari produknya dulu
+        // 1. Cari produk
         $produk = Produk::find($id);
         if (!$produk) {
             return response()->json(['message' => 'Produk tidak ditemukan'], 404);
         }
 
-        // 2. Validasi data (opsional, tapi bagus)
+        // 2. Validasi
         $validator = Validator::make($request->all(), [
             'nama_produk' => 'sometimes|required|string|max:100',
             'kategori_produk' => 'sometimes|required|string|max:50',
             'harga_produk' => 'sometimes|required|numeric|min:0',
             'stok_produk' => 'sometimes|required|integer|min:0',
-            'status_produk' => 'sometimes|required|in:Aktif,Arsip', // Pastikan valuenya benar
+            'deskripsi_produk' => 'nullable|string',
+            'berat_produk' => 'sometimes|required|numeric|min:0',
+            'status_produk' => 'sometimes|required|in:Aktif,Arsip',
+            'foto_produk' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048', 
         ]);
         
         if($validator->fails()){
             return response()->json(['status' => 'error', 'errors' => $validator->errors()], 400);
         }
 
-        // 3. Update produk
-        $produk->update($request->all());
+        // [PERBAIKAN 1] Ambil semua data KECUALI foto_produk
+        // Ini mencegah 'foto_produk' => null menimpa gambar lama di DB
+        $dataUpdate = $request->except(['foto_produk']);
+
+        // 3. Cek Logika Upload Foto Baru
+        if ($request->hasFile('foto_produk')) {
+            
+            // A. Hapus foto lama fisik (Gunakan Storage disk 'public')
+            if ($produk->foto_produk && Storage::disk('public')->exists($produk->foto_produk)) {
+                Storage::disk('public')->delete($produk->foto_produk);
+            }
+
+            // B. Simpan foto baru langsung ke disk 'public'
+            // Hasilnya path bersih: "images/produk/namafile.jpg"
+            $path = $request->file('foto_produk')->store('images/produk', 'public');
+            
+            // C. Masukkan path baru ke array dataUpdate
+            $dataUpdate['foto_produk'] = $path;
+        }
+
+        // 4. Eksekusi Update
+        // Sekarang $dataUpdate hanya berisi foto_produk JIKA ada file baru.
+        // Jika tidak ada file baru, kolom foto_produk tidak disentuh sama sekali.
+        $produk->update($dataUpdate);
 
         return response()->json([
             'status' => 'success',

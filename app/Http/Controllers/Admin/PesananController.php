@@ -48,7 +48,7 @@ class PesananController extends Controller
 
         $validator = Validator::make($request->all(), [
             // Pastikan status yang dikirim valid
-            'status_pesanan' => 'required|string|in:Diproses,Dikirim,Selesai'
+            'status_pesanan' => 'required|string|in:dikemas,dikirim,selesai'
         ]);
 
         if($validator->fails()){
@@ -64,8 +64,8 @@ class PesananController extends Controller
 
         // Logika untuk konfirmasi pembayaran
         // Jika status baru 'Diproses', artinya admin memverifikasi pembayaran
-        if ($status_baru == 'Diproses' && $pesanan->pembayaran->status_pembayaran == 'Menunggu Konfirmasi') {
-            $pesanan->pembayaran->update(['status_pembayaran' => 'Selesai']);
+        if ($status_baru == 'dikemas' && $pesanan->pembayaran->status_pembayaran == 'menunggu_konfirmasi') {
+            $pesanan->pembayaran->update(['status_pembayaran' => 'selesai']);
         }
         
         // Update status pesanan
