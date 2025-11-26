@@ -15,7 +15,7 @@ class BeritaController extends Controller
     {
         $berita = Berita::where('status_publikasi_berita', 'Terbit')
                         ->orderBy('tanggal_publikasi', 'desc')
-                        ->paginate(10);
+                        ->get();
         
         return response()->json($berita, 200);
     }

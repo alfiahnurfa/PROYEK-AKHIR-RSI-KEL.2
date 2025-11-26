@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfilController;
 use App\Http\Controllers\ProdukController;
-use App\Http\Controllers\KeranjangController;
 use App\Http\Controllers\PesananController;
 use App\Http\Controllers\PembayaranController;
 use App\Http\Controllers\KomplainController;
@@ -46,12 +45,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/profil', [ProfilController::class, 'ubahProfil']);
         Route::put('/profil/ubah-sandi', [ProfilController::class, 'ubahKataSandi']);
 
-        // Keranjang (Contoh, bisa disesuaikan)
-        Route::get('/keranjang', [KeranjangController::class, 'ambilKeranjang']);
-        Route::post('/keranjang', [KeranjangController::class, 'tambahItem']);
-        Route::put('/keranjang/{id_detail}', [KeranjangController::class, 'perbaruiKuantitas']);
-        Route::delete('/keranjang/{id_detail}', [KeranjangController::class, 'hapusItem']);
-
         // Pesanan & Pembayaran
         Route::post('/pesanan/checkout', [PesananController::class, 'buatPesanan']); // (buatPesanan)
         Route::get('/pesanan', [PesananController::class, 'ambilDaftarPesanan']);
@@ -67,7 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // --- Rute Khusus Admin ---
-    Route::prefix('admin')->middleware('role:admin')->name('admin.')->group(function () {
+    Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
         // Admin: Manajemen Produk
         Route::post('/produk', [AdminProdukController::class, 'tambahProduk']);
         Route::put('/produk/{id}', [AdminProdukController::class, 'ubahProduk']);

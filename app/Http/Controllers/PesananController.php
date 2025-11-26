@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pesanan;
 use App\Models\Produk;
+use App\Models\DetailPesanan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -21,64 +22,71 @@ class PesananController extends Controller
     {
         $user = Auth::user();
 
-        // 1. Cari keranjang aktif
-        $keranjang = Pesanan::where('id_pembeli', $user->id_pengguna)
-                            ->where('status_pesanan', 'Keranjang')
-                            ->with('detailPesanans') // Ambil detail item
-                            ->first();
-
-        if (!$keranjang || $keranjang->detailPesanans->isEmpty()) {
-            return response()->json(['status' => 'error', 'message' => 'Keranjang Anda kosong'], 400);
-        }
-
-        // 2. Validasi input checkout
         $validator = Validator::make($request->all(), [
-            // 'alamat_pengiriman' => 'required|string',
-            'metode_pembayaran' => 'required|string|in:QRIS,VA,COD', // Contoh
+            'items' => 'required|array|min:1',
+            'items.*.id_produk' => 'required|integer|exists:produks,id_produk',
+            'items.*.kuantitas_produk' => 'required|integer|min:1',
+            'items.*.harga_produk_tersimpan' => 'required|numeric',
         ]);
 
-        if($validator->fails()){
-            return response()->json(['status' => 'error', 'errors' => $validator->errors()], 400);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 400);
         }
 
-        // 3. Gunakan DB Transaction (PENTING!)
-        // Ini untuk memastikan jika ada 1 produk gagal, semua proses dibatalkan.
         try {
             DB::beginTransaction();
 
-            // 4. Cek stok semua item di keranjang
-            foreach ($keranjang->detailPesanans as $item) {
-                $produk = Produk::find($item->id_produk);
-                if ($produk->stok_produk < $item->kuantitas_produk) {
-                    throw new \Exception('Stok untuk produk ' . $produk->nama_produk . ' tidak mencukupi.');
-                }
-                // Kurangi stok
-                $produk->stok_produk -= $item->kuantitas_produk;
-                $produk->save();
-            }
-            
-            // 5. Buat data Pembayaran
-            $keranjang->pembayaran()->create([
-                'status_pembayaran' => 'Menunggu',
-                'metode_pembayaran' => $request->metode_pembayaran,
-            ]);
-
-            // 6. Update status Pesanan (dari 'Keranjang' menjadi 'Menunggu Pembayaran')
-            $keranjang->update([
-                'status_pesanan' => 'Menunggu Pembayaran',
+            // 1️⃣ Buat pesanan baru
+            $pesanan = Pesanan::create([
+                'id_pembeli' => $user->id_pengguna,
+                'status_pesanan' => 'menunggu',
                 'alamat_pengiriman' => $user->alamat,
             ]);
-            
-            DB::commit(); // Semua sukses, simpan perubahan ke database
+
+            // 2️⃣ Loop semua produk dari FE (BUY NOW atau CART)
+            foreach ($request->items as $item) {
+
+                $produk = Produk::find($item['id_produk']);
+
+                // Cek stok
+                if ($produk->stok_produk < $item['kuantitas_produk']) {
+                    throw new \Exception("Stok {$produk->nama_produk} tidak mencukupi.");
+                }
+
+                // Kurangi stok
+                $produk->stok_produk -= $item['kuantitas_produk'];
+                $produk->save();
+
+                // Insert detail pesanan
+                DetailPesanan::create([
+                    'id_pesanan' => $pesanan->id_pesanan,
+                    'id_produk' => $item['id_produk'],
+                    'kuantitas_produk' => $item['kuantitas_produk'],
+                    'harga_produk_tersimpan' => $item['harga_produk_tersimpan'],
+                ]);
+            }
+
+            // 3️⃣ Tambah pembayaran
+            $pesanan->pembayaran()->create([
+                'status_pembayaran' => 'menunggu_pembayaran',
+                'metode_pembayaran' => 'QRIS'
+            ]);
+
+            DB::commit();
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Checkout berhasil, pesanan sedang diproses',
-                'data' => $keranjang
+                'message' => 'Checkout berhasil',
+                'id_pesanan' => $pesanan->id_pesanan,
+                'data' => $pesanan
             ], 201);
 
         } catch (\Exception $e) {
-            DB::rollBack(); // Ada error, batalkan semua perubahan
+            DB::rollBack();
+
             return response()->json([
                 'status' => 'error',
                 'message' => $e->getMessage()
