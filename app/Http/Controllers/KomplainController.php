@@ -23,11 +23,17 @@ class KomplainController extends Controller
         $validator = Validator::make($request->all(), [
             'judul_komplain' => 'required|string|max:150',
             'deskripsi_komplain' => 'required|string',
-            'bukti_komplain' => 'nullable|string', // Asumsi URL ke gambar/video
+            // 'bukti_komplain' => 'nullable|string', // Asumsi URL ke gambar/video
+            'bukti_komplain' => 'required|image|mimes:jpg,png|max:10240', // Asumsi URL ke gambar/video
         ]);
         
         if($validator->fails()){
             return response()->json(['status' => 'error', 'errors' => $validator->errors()], 400);
+        }
+
+        $path = null;
+        if ($request->hasFile('bukti_komplain')) {
+            $path = $request->file('bukti_komplain')->store('images/komplain', 'public');
         }
 
         // 2. Cek Pesanan
@@ -40,7 +46,7 @@ class KomplainController extends Controller
         }
 
         // 3. Cek Precondition (Sesuai PSD-006: Pesanan harus "Selesai")
-        if ($pesanan->status_pesanan !== 'Selesai') {
+        if ($pesanan->status_pesanan !== 'selesai') {
             return response()->json([
                 'status' => 'error', 
                 'message' => 'Komplain hanya bisa diajukan untuk pesanan yang sudah Selesai.'
@@ -59,7 +65,7 @@ class KomplainController extends Controller
             'id_pembeli' => $user->id_pengguna,
             'judul_komplain' => $request->judul_komplain,
             'deskripsi_komplain' => $request->deskripsi_komplain,
-            'bukti_komplain' => $request->bukti_komplain,
+            'bukti_komplain' => $path,
             'tanggal_pengajuan' => now(), // Sesuai pseudo-code
             'status_komplain' => 'Baru', // Sesuai pseudo-code
         ]);

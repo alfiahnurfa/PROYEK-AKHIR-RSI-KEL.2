@@ -25,10 +25,12 @@ Route::post('/register', [UserController::class, 'daftarPengguna']);
 Route::post('/login', [UserController::class, 'masuk']);
 
 Route::get('/produk', [ProdukController::class, 'ambilSemuaProduk']);
+Route::get('/produkLaris', [ProdukController::class, 'ambilProdukTerlaris']);
 Route::get('/produk/search', [ProdukController::class, 'cariProduk']); // Contoh route untuk cari/filter
 Route::get('/produk/{id}', [ProdukController::class, 'ambilDetailProduk']);
 
 Route::get('/berita', [BeritaController::class, 'ambilDaftarBerita']);
+Route::get('/beritaBaru', [BeritaController::class, 'ambilBeritaTerkini']);
 Route::get('/berita/{id}', [BeritaController::class, 'ambilDetailBerita']);
 
 

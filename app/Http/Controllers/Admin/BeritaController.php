@@ -32,7 +32,7 @@ class BeritaController extends Controller
         $validator = Validator::make($request->all(), [
             'judul_berita' => 'required|string|max:200',
             'isi_berita' => 'required|string',
-            'gambar_berita' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Max 2MB
+            'gambar_berita' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240', // Max 2MB
             'status_publikasi_berita' => 'required|in:Draft,Terbit,Arsip',
         ]);
         
@@ -76,7 +76,7 @@ class BeritaController extends Controller
         $validator = Validator::make($request->all(), [
             'judul_berita' => 'sometimes|required|string|max:200',
             'isi_berita' => 'sometimes|required|string',
-            'gambar_berita' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'gambar_berita' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:10240',
             'status_publikasi_berita' => 'sometimes|required|in:Draft,Terbit,Arsip',
         ]);
         
