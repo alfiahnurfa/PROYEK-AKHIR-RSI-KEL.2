@@ -20,6 +20,16 @@ class BeritaController extends Controller
         return response()->json($berita, 200);
     }
 
+    public function ambilBeritaTerkini(Request $request)
+    {
+        $berita = Berita::where('status_publikasi_berita', 'Terbit')
+                        ->orderBy('tanggal_publikasi', 'desc')
+                        ->take(3)
+                        ->get();
+        
+        return response()->json($berita, 200);
+    }
+
     /**
      * [cite_start]Sesuai PSD-007 (ambilDetailBerita) [cite: 8557-8559]
      */
