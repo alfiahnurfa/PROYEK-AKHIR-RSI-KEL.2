@@ -42,7 +42,7 @@ class ProdukController extends Controller
             'berat_produk' => 'required|numeric|min:0',
             'harga_produk' => 'required|numeric|min:0',
             'stok_produk' => 'required|integer|min:0',
-            'foto_produk' => 'required|image|mimes:jpg,png|max:2048', // Jika mau upload file
+            'foto_produk' => 'required|image|mimes:jpg,png|max:10240', // Jika mau upload file
         ]);
 
         if($validator->fails()){
@@ -98,7 +98,7 @@ class ProdukController extends Controller
             'deskripsi_produk' => 'nullable|string',
             'berat_produk' => 'sometimes|required|numeric|min:0',
             'status_produk' => 'sometimes|required|in:Aktif,Arsip',
-            'foto_produk' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048', 
+            'foto_produk' => 'sometimes|image|mimes:jpeg,png,jpg|max:10240', 
         ]);
         
         if($validator->fails()){
