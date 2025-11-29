@@ -11,7 +11,7 @@ class CreateKomplainsTable extends Migration
         Schema::create('komplains', function (Blueprint $table) {
             $table->id('id_komplain');
             $table->foreignId('id_pesanan')->constrained('pesanans', 'id_pesanan');
-            $table->foreignId('id_pembeli')->constrained('users', 'id_pengguna');
+            // $table->foreignId('id_pembeli')->constrained('users', 'id_pengguna');
             $table->string('judul_komplain', 150);
             $table->text('deskripsi_komplain');
             $table->string('bukti_komplain', 255)->nullable();

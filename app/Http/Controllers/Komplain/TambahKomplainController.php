@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Komplain;
 
 use App\Models\Pesanan;
 use App\Models\Komplain;
@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
-class KomplainController extends Controller
+class TambahKomplainController extends Controller
 {
     /**
      * Mengajukan komplain untuk pesanan yang sudah selesai
@@ -23,8 +23,7 @@ class KomplainController extends Controller
         $validator = Validator::make($request->all(), [
             'judul_komplain' => 'required|string|max:150',
             'deskripsi_komplain' => 'required|string',
-            // 'bukti_komplain' => 'nullable|string', // Asumsi URL ke gambar/video
-            'bukti_komplain' => 'required|image|mimes:jpg,png|max:10240', // Asumsi URL ke gambar/video
+            'bukti_komplain' => 'required|image|mimes:jpg,png|max:10240',
         ]);
         
         if($validator->fails()){
@@ -66,8 +65,8 @@ class KomplainController extends Controller
             'judul_komplain' => $request->judul_komplain,
             'deskripsi_komplain' => $request->deskripsi_komplain,
             'bukti_komplain' => $path,
-            'tanggal_pengajuan' => now(), // Sesuai pseudo-code
-            'status_komplain' => 'Baru', // Sesuai pseudo-code
+            'tanggal_pengajuan' => now(),
+            'status_komplain' => 'Baru',
         ]);
 
         return response()->json([

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Berita;
 
 use App\Models\Berita;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class BeritaController extends Controller
+class LihatBeritaController extends Controller
 {
     /**
      * [cite_start]Sesuai PSD-007 (ambilDaftarBerita) [cite: 8557-8559]

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Pesanan;
 
 use App\Models\Pesanan;
 use App\Models\Produk;
@@ -9,9 +9,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB; // Untuk database transaction
+use Illuminate\Support\Facades\DB; 
 
-class PesananController extends Controller
+class TambahPesananController extends Controller
 {
     /**
      * Proses "Checkout"
@@ -39,14 +39,14 @@ class PesananController extends Controller
         try {
             DB::beginTransaction();
 
-            // 1️⃣ Buat pesanan baru
+            // 1. Buat pesanan baru
             $pesanan = Pesanan::create([
                 'id_pembeli' => $user->id_pengguna,
                 'status_pesanan' => 'menunggu',
                 'alamat_pengiriman' => $user->alamat,
             ]);
 
-            // 2️⃣ Loop semua produk dari FE (BUY NOW atau CART)
+            // 2️. Cek stok tiap produk & buat detail pesanan
             foreach ($request->items as $item) {
 
                 $produk = Produk::find($item['id_produk']);
@@ -69,7 +69,7 @@ class PesananController extends Controller
                 ]);
             }
 
-            // 3️⃣ Tambah pembayaran
+            // 3️. Tambah pembayaran
             $pesanan->pembayaran()->create([
                 'status_pembayaran' => 'menunggu_pembayaran',
                 'metode_pembayaran' => 'QRIS'
@@ -92,69 +92,5 @@ class PesananController extends Controller
                 'message' => $e->getMessage()
             ], 400);
         }
-    }
-
-    /**
-     * Mengambil daftar riwayat pesanan (bukan keranjang)
-     * [cite_start]Sesuai PSD-005 (ambilDaftarPesananPembeli) [cite: 8550-8551, 8553]
-     */
-    public function ambilDaftarPesanan(Request $request)
-    {
-        $user = Auth::user();
-        
-        $excludeStatus = ['Checkout', 'Keranjang'];
-
-        $daftarPesanan = Pesanan::where('id_pembeli', $user->id_pengguna)
-                                ->whereNotIn('status_pesanan', $excludeStatus) // Ambil semua KECUALI keranjang
-                                ->with('detailPesanans.produk', 'pembayaran')
-                                ->orderBy('created_at', 'desc')
-                                ->get();
-        
-        return response()->json($daftarPesanan, 200);
-    }
-
-    public function ambilDetailPesanan($id)
-    {
-        $user = Auth::user();
-        
-        $daftarPesanan = Pesanan::where('id_pembeli', $user->id_pengguna)
-                                ->where('id_pesanan', $id)
-                                ->with('detailPesanans.produk', 'pembayaran')
-                                ->orderBy('created_at', 'desc')
-                                ->first();
-        
-        if (!$daftarPesanan) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Pesanan tidak ditemukan.'
-            ], 404); // 404 Not Found
-        }
-        return response()->json($daftarPesanan, 200);
-    }
-
-    /**
-     * Cek status satu pesanan spesifik
-     * [cite_start]Sesuai PSD-005 (cekStatusPesanan) [cite: 8550-8551, 8553]
-     */
-    public function cekStatusPesanan(Request $request, $id_pesanan)
-    {
-        $user = Auth::user();
-        
-        $pesanan = Pesanan::where('id_pesanan', $id_pesanan)
-                          ->where('id_pembeli', $user->id_pengguna)
-                          ->first();
-                          
-        if (!$pesanan) {
-            return response()->json(['status' => 'error', 'message' => 'Pesanan tidak ditemukan'], 404);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'id_pesanan' => $pesanan->id_pesanan,
-                'status_pesanan' => $pesanan->status_pesanan,
-                'status_pembayaran' => $pesanan->pembayaran ? $pesanan->pembayaran->status_pembayaran : 'N/A'
-            ]
-        ], 200);
     }
 }
