@@ -2,17 +2,30 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\ProfilController;
-use App\Http\Controllers\ProdukController;
-use App\Http\Controllers\PesananController;
-use App\Http\Controllers\PembayaranController;
-use App\Http\Controllers\KomplainController;
-use App\Http\Controllers\BeritaController;
-use App\Http\Controllers\Admin\ProdukController as AdminProdukController;
-use App\Http\Controllers\Admin\PesananController as AdminPesananController;
-use App\Http\Controllers\Admin\KomplainController as AdminKomplainController;
-use App\Http\Controllers\Admin\BeritaController as AdminBeritaController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Profil\LihatProfilController;
+use App\Http\Controllers\Profil\UbahProfilController;
+use App\Http\Controllers\Profil\UbahKataSandiController;
+use App\Http\Controllers\Produk\LihatProdukController;
+use App\Http\Controllers\Pesanan\LihatPesananController;
+use App\Http\Controllers\Pesanan\TambahPesananController;
+use App\Http\Controllers\Pembayaran\BatalkanPembayaranController;
+use App\Http\Controllers\Pembayaran\KonfirmasiPembayaranController;
+use App\Http\Controllers\Pembayaran\LihatDetailPembayaranController;
+use App\Http\Controllers\Komplain\TambahKomplainController;
+use App\Http\Controllers\Berita\LihatBeritaController;
+use App\Http\Controllers\Admin\Produk\TambahProdukController;
+use App\Http\Controllers\Admin\Produk\UbahProdukController;
+use App\Http\Controllers\Admin\Produk\HapusProdukController;
+use App\Http\Controllers\Admin\Pesanan\LihatSemuaPesananController;
+use App\Http\Controllers\Admin\Pesanan\UbahPesananController;
+use App\Http\Controllers\Admin\Komplain\UbahKomplainController;
+use App\Http\Controllers\Admin\Komplain\LihatKomplainController;
+use App\Http\Controllers\Admin\Berita\HapusBeritaController;
+use App\Http\Controllers\Admin\Berita\TambahBeritaController;
+use App\Http\Controllers\Admin\Berita\UbahBeritaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,65 +34,64 @@ use App\Http\Controllers\Admin\BeritaController as AdminBeritaController;
 */
 
 // === Rute Publik (Tidak perlu login) ===
-Route::post('/register', [UserController::class, 'daftarPengguna']);
-Route::post('/login', [UserController::class, 'masuk']);
+Route::post('/register', [RegisterController::class, 'daftarPengguna']);
+Route::post('/login', [LoginController::class, 'masuk']);
 
-Route::get('/produk', [ProdukController::class, 'ambilSemuaProduk']);
-Route::get('/produkLaris', [ProdukController::class, 'ambilProdukTerlaris']);
-Route::get('/produk/search', [ProdukController::class, 'cariProduk']); // Contoh route untuk cari/filter
-Route::get('/produk/{id}', [ProdukController::class, 'ambilDetailProduk']);
+Route::get('/produk', [LihatProdukController::class, 'ambilSemuaProduk']);
+Route::get('/produkLaris', [LihatProdukController::class, 'ambilProdukTerlaris']);
+Route::get('/produk/search', [LihatProdukController::class, 'cariProduk']);
+Route::get('/produk/{id}', [LihatProdukController::class, 'ambilDetailProduk']);
 
-Route::get('/berita', [BeritaController::class, 'ambilDaftarBerita']);
-Route::get('/beritaBaru', [BeritaController::class, 'ambilBeritaTerkini']);
-Route::get('/berita/{id}', [BeritaController::class, 'ambilDetailBerita']);
+Route::get('/berita', [LihatBeritaController::class, 'ambilDaftarBerita']);
+Route::get('/beritaBaru', [LihatBeritaController::class, 'ambilBeritaTerkini']);
+Route::get('/berita/{id}', [LihatBeritaController::class, 'ambilDetailBerita']);
 
 
 // === Rute Terotentikasi (Perlu login sebagai 'pembeli' atau 'admin') ===
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [UserController::class, 'logout']);
+    Route::post('/logout', [LogoutController::class, 'logout']);
 
     // --- Rute Khusus Pembeli ---
     // (Asumsi Anda akan menambahkan middleware role 'pembeli')
     Route::prefix('user')->middleware('role:pembeli')->group(function () {
-        Route::get('/me', [UserController::class, 'me']);
+        Route::get('/me', [LoginController::class, 'me']);
 
-        Route::get('/profil', [ProfilController::class, 'ambilProfil']);
-        Route::put('/profil', [ProfilController::class, 'ubahProfil']);
-        Route::put('/profil/ubah-sandi', [ProfilController::class, 'ubahKataSandi']);
+        Route::get('/profil', [LihatProfilController::class, 'ambilProfil']);
+        Route::put('/profil', [UbahProfilController::class, 'ubahProfil']);
+        Route::put('/profil/ubah-sandi', [UbahKataSandiController::class, 'ubahKataSandi']);
 
         // Pesanan & Pembayaran
-        Route::post('/pesanan/checkout', [PesananController::class, 'buatPesanan']); // (buatPesanan)
-        Route::get('/pesanan', [PesananController::class, 'ambilDaftarPesanan']);
-        Route::get('/pesanan/{id_pesanan}', [PesananController::class, 'ambilDetailPesanan']);
-        Route::get('/pesanan/{id_pesanan}/status', [PesananController::class, 'cekStatusPesanan']);
+        Route::post('/pesanan/checkout', [TambahPesananController::class, 'buatPesanan']); // (buatPesanan)
+        Route::get('/pesanan', [LihatPesananController::class, 'ambilDaftarPesanan']);
+        Route::get('/pesanan/{id_pesanan}', [LihatPesananController::class, 'ambilDetailPesanan']);
         
-        Route::get('/pesanan/{id_pesanan}/pembayaran', [PembayaranController::class, 'ambilDetailPembayaran']);
-        Route::post('/pesanan/{id_pesanan}/pembayaran/konfirmasi', [PembayaranController::class, 'perbaruiStatusPembayaran']);
-        Route::post('/pesanan/{id_pesanan}/batalkan', [PembayaranController::class, 'batalkanPesanan']);
+        Route::get('/pesanan/{id_pesanan}/pembayaran', [LihatDetailPembayaranController::class, 'ambilDetailPembayaran']);
+        Route::post('/pesanan/{id_pesanan}/pembayaran/konfirmasi', [KonfirmasiPembayaranController::class, 'perbaruiStatusPembayaran']);
+        Route::post('/pesanan/{id_pesanan}/batalkan', [BatalkanPembayaranController::class, 'batalkanPesanan']);
 
         // Komplain
-        Route::post('/pesanan/{id_pesanan}/komplain', [KomplainController::class, 'ajukanKomplain']);
+        Route::post('/pesanan/{id_pesanan}/komplain', [TambahKomplainController::class, 'ajukanKomplain']);
     });
 
     // --- Rute Khusus Admin ---
     Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
         // Admin: Manajemen Produk
-        Route::post('/produk', [AdminProdukController::class, 'tambahProduk']);
-        Route::put('/produk/{id}', [AdminProdukController::class, 'ubahProduk']);
-        Route::delete('/produk/{id}', [AdminProdukController::class, 'hapusProduk']);
+        Route::post('/produk', [TambahProdukController::class, 'tambahProduk']);
+        Route::put('/produk/{id}', [UbahProdukController::class, 'ubahProduk']);
+        Route::delete('/produk/{id}', [HapusProdukController::class, 'hapusProduk']);
 
         // Admin: Manajemen Pesanan
-        Route::get('/pesanan', [AdminPesananController::class, 'ambilSemuaPesanan']);
-        Route::put('/pesanan/{id_pesanan}/status', [AdminPesananController::class, 'perbaruiStatusPesanan']);
+        Route::get('/pesanan', [LihatSemuaPesananController::class, 'ambilSemuaPesanan']);
+        Route::put('/pesanan/{id_pesanan}/status', [UbahPesananController::class, 'perbaruiStatusPesanan']);
 
         // Admin: Manajemen Komplain
-        Route::get('/komplain', [AdminKomplainController::class, 'ambilDaftarKomplain']);
-        Route::get('/komplain/{id_komplain}', [AdminKomplainController::class, 'ambilDetailKomplain']);
-        Route::put('/komplain/{id_komplain}/status', [AdminKomplainController::class, 'perbaruiStatusKomplain']);
+        Route::get('/komplain', [LihatKomplainController::class, 'ambilDaftarKomplain']);
+        Route::get('/komplain/{id_komplain}', [LihatKomplainController::class, 'ambilDetailKomplain']);
+        Route::put('/komplain/{id_komplain}/status', [UbahKomplainController::class, 'perbaruiStatusKomplain']);
 
         // Admin: Manajemen Berita
-        Route::post('/berita', [AdminBeritaController::class, 'tambahBerita']);
-        Route::put('/berita/{id}', [AdminBeritaController::class, 'ubahBerita']);
-        Route::delete('/berita/{id}', [AdminBeritaController::class, 'hapusBerita']);
+        Route::post('/berita', [TambahBeritaController::class, 'tambahBerita']);
+        Route::put('/berita/{id}', [UbahBeritaController::class, 'ubahBerita']);
+        Route::delete('/berita/{id}', [HapusBeritaController::class, 'hapusBerita']);
     });
 });
