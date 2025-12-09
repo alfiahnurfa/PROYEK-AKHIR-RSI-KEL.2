@@ -4,17 +4,9 @@ namespace App\Http\Controllers\Admin\Produk;
 
 use App\Models\Produk;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 
 class HapusProdukController extends Controller
 {
-    private function cekAdmin() {
-        if (Auth::user()->role !== 'admin') {
-            return false;
-        }
-        return true;
-    }
-
     /**
      * Menghapus produk.
      * [cite_start]Sesuai PSD-008 (hapusProduk) [cite: 8560, 8563]

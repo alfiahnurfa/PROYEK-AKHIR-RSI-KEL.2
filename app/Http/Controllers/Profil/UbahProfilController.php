@@ -69,7 +69,7 @@ class UBahProfilController extends Controller
         $user->update($data);
 
 
-        // 3. Kembalikan Respon
+        // 5. Kembalikan Respon
         return response()->json([
             'status' => 'success',
             'message' => 'Profil berhasil diperbarui',

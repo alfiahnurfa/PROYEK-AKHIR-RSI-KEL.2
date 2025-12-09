@@ -76,6 +76,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- Rute Khusus Admin ---
     Route::prefix('admin')->middleware(['auth:sanctum', 'role:admin'])->group(function () {
         // Admin: Manajemen Produk
+        Route::get('/produk', [TambahProdukController::class, 'tambahProduk']);
         Route::post('/produk', [TambahProdukController::class, 'tambahProduk']);
         Route::put('/produk/{id}', [UbahProdukController::class, 'ubahProduk']);
         Route::delete('/produk/{id}', [HapusProdukController::class, 'hapusProduk']);
