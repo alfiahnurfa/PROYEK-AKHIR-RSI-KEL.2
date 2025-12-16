@@ -11,7 +11,7 @@ class LihatBeritaController extends Controller
     /**
      * [cite_start]Sesuai PSD-007 (ambilDaftarBerita) [cite: 8557-8559]
      */
-    public function ambilDaftarBerita(Request $request)
+    public function ambilDaftarBerita()
     {
         $berita = Berita::where('status_publikasi_berita', 'Terbit')
                         ->orderBy('tanggal_publikasi', 'desc')
@@ -20,7 +20,7 @@ class LihatBeritaController extends Controller
         return response()->json($berita, 200);
     }
 
-    public function ambilBeritaTerkini(Request $request)
+    public function ambilBeritaTerkini()
     {
         $berita = Berita::where('status_publikasi_berita', 'Terbit')
                         ->orderBy('tanggal_publikasi', 'desc')

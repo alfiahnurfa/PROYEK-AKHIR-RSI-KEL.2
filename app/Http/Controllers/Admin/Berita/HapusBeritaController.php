@@ -4,19 +4,10 @@ namespace App\Http\Controllers\Admin\Berita;
 
 use App\Models\Berita;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage; // [Tambahan] Import Storage untuk hapus file lama
 
 class HapusBeritaController extends Controller
 {
-    // Cek role Admin
-    private function cekAdmin() {
-        if (Auth::user()->role !== 'admin') {
-            return false;
-        }
-        return true;
-    }
-
     /**
      * Sesuai PSD-011 (hapusBerita)
      */

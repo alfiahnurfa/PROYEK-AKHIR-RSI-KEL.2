@@ -9,8 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class KonfirmasiPembayaranController extends Controller
 {
-
-    public function perbaruiStatusPembayaran(Request $request, $id_pesanan)
+    public function perbaruiStatusPembayaran($id_pesanan)
     {
         // 1: Inisialisasi dan Ambil Pengguna
         $user = Auth::user();
@@ -31,7 +30,7 @@ class KonfirmasiPembayaranController extends Controller
 
         // 6: Predicate Node 2: Status pembayaran sudah dikonfirmasi/dibatalkan?
         if ($pembayaran->status_pembayaran !== 'menunggu_pembayaran') {
-            // 7: Status Pembayaran Salah (400)
+             // 7: Status Pembayaran Salah (400)
              return response()->json(['status' => 'error', 'message' => 'Pembayaran sudah dikonfirmasi atau dibatalkan'], 400);
         }
 
