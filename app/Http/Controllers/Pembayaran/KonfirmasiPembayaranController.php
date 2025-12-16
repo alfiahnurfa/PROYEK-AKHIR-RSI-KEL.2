@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class KonfirmasiPembayaranController extends Controller
 {
-    public function perbaruiStatusPembayaran(Request $request, $id_pesanan)
+    public function perbaruiStatusPembayaran($id_pesanan)
     {
         // 1: Inisialisasi dan Ambil Pengguna
         $user = Auth::user();
