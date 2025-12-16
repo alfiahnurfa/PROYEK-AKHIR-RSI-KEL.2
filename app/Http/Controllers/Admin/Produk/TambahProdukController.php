@@ -28,7 +28,7 @@ class TambahProdukController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nama_produk' => 'required|string|max:100',
+            'nama_produk' => 'required|string|max:100|unique:produks',
             'kategori_produk' => 'required|string|max:50',
             'deskripsi_produk' => 'nullable|string',
             'berat_produk' => 'required|numeric|min:0',
@@ -43,9 +43,9 @@ class TambahProdukController extends Controller
         
         // Logika Upload File
         $path = null;
-        if ($request->hasFile('foto_produk')) {
+        // if ($request->hasFile('foto_produk')) {
             $path = $request->file('foto_produk')->store('images/produk', 'public');
-        }
+        // }
 
         $produk = Produk::create([
             'nama_produk' => $request->nama_produk,
