@@ -5,19 +5,10 @@ namespace App\Http\Controllers\Admin\Berita;
 use App\Models\Berita;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class TambahBeritaController extends Controller
 {
-    // Cek role Admin
-    private function cekAdmin() {
-        if (Auth::user()->role !== 'admin') {
-            return false;
-        }
-        return true;
-    }
-
     /**
      * Sesuai PSD-011 (tambahBerita)
      */

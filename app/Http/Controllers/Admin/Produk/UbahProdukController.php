@@ -7,17 +7,9 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
 
 class UbahProdukController extends Controller
 {
-    private function cekAdmin() {
-        if (Auth::user()->role !== 'admin') {
-            return false;
-        }
-        return true;
-    }
-
     /**
      * Memperbarui produk yang ada.
      * [cite_start]Sesuai PSD-008 (ubahProduk) [cite: 8560, 8563]

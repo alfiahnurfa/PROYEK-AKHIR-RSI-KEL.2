@@ -5,17 +5,9 @@ namespace App\Http\Controllers\Admin\Komplain;
 use App\Models\Komplain;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 
 class LihatKomplainController extends Controller
 {
-    private function cekAdmin() {
-        if (Auth::user()->role !== 'admin') {
-            return false;
-        }
-        return true;
-    }
-
     /**
      * [cite_start]Sesuai PSD-010 (ambilDaftarKomplain) [cite: 8568-8570]
      */

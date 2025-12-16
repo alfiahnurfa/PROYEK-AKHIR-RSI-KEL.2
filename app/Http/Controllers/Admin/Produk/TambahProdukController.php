@@ -6,17 +6,9 @@ use App\Models\Produk;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
 
 class TambahProdukController extends Controller
 {
-    private function cekAdmin() {
-        if (Auth::user()->role !== 'admin') {
-            return false;
-        }
-        return true;
-    }
-
     /**
      * Menambahkan produk baru.
      * [cite_start]Sesuai PSD-008 (tambahProduk) [cite: 8560-8561, 8563]

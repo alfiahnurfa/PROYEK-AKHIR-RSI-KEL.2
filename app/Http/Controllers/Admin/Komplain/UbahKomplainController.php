@@ -5,18 +5,10 @@ namespace App\Http\Controllers\Admin\Komplain;
 use App\Models\Komplain;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class UbahKomplainController extends Controller
 {
-    private function cekAdmin() {
-        if (Auth::user()->role !== 'admin') {
-            return false;
-        }
-        return true;
-    }
-
     /**
      * (Tambahan) Admin memperbarui status komplain
      */
